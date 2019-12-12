@@ -4,13 +4,15 @@ import (
 	halkyon "halkyon.io/api/capability/v1beta1"
 	framework "halkyon.io/operator-framework"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type Plugin interface {
 	framework.DependentResource
 	GetCategory() halkyon.CapabilityCategory
 	GetType() halkyon.CapabilityType
-	GetWatchedResourcesTypes() []runtime.Object
+	GetWatchedResourcesTypes() []schema.GroupVersionKind
+	ReadyFor(owner framework.Resource) framework.DependentResource
 }
 
 type PluginRequest struct {

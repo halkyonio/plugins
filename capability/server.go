@@ -2,18 +2,19 @@ package capability
 
 import (
 	halkyon "halkyon.io/api/capability/v1beta1"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type PluginServer interface {
 	Build(req PluginRequest, res *BuildResponse) error
 	GetCategory(req PluginRequest, res *halkyon.CapabilityCategory) error
-	GetWatchedResourcesTypes(req PluginRequest, res *[]runtime.Object) error
+	GetWatchedResourcesTypes(req PluginRequest, res *[]schema.GroupVersionKind) error
 	GetType(req PluginRequest, res *halkyon.CapabilityType) error
 	IsReady(req PluginRequest, res *IsReadyResponse) error
 	Name(req PluginRequest, res *string) error
 	NameFrom(req PluginRequest, res *string) error
 	Update(req PluginRequest, res *UpdateResponse) error
+	GetGroupVersionKind(req PluginRequest, res *schema.GroupVersionKind) error
 }
 
 type PluginServerImpl struct {
@@ -32,6 +33,12 @@ func NewPluginServer(category halkyon.CapabilityCategory, capabilityType halkyon
 	}
 }
 
+func (p PluginServerImpl) GetGroupVersionKind(req PluginRequest, res *schema.GroupVersionKind) error {
+	p.capability.SetOwner(req.Owner)
+	*res = p.capability.GetGroupVersionKind()
+	return nil
+}
+
 func (p PluginServerImpl) Build(req PluginRequest, res *BuildResponse) error {
 	p.capability.SetOwner(req.Owner)
 	build, err := p.capability.Build()
@@ -45,9 +52,9 @@ func (p PluginServerImpl) GetCategory(req PluginRequest, res *halkyon.Capability
 	return nil
 }
 
-func (p PluginServerImpl) GetWatchedResourcesTypes(req PluginRequest, res *[]runtime.Object) error {
+func (p PluginServerImpl) GetWatchedResourcesTypes(req PluginRequest, res *[]schema.GroupVersionKind) error {
 	p.capability.SetOwner(req.Owner)
-	*res = []runtime.Object{p.capability.Prototype()}
+	*res = []schema.GroupVersionKind{p.capability.GetGroupVersionKind()}
 	return nil
 }
 
