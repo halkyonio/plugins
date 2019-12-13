@@ -18,19 +18,13 @@ type PluginServer interface {
 }
 
 type PluginServerImpl struct {
-	capability     PluginResource
-	category       halkyon.CapabilityCategory
-	capabilityType halkyon.CapabilityType
+	capability PluginResource
 }
 
 var _ PluginServer = &PluginServerImpl{}
 
-func NewPluginServer(category halkyon.CapabilityCategory, capabilityType halkyon.CapabilityType, capability PluginResource) PluginServer {
-	return PluginServerImpl{
-		capability:     capability,
-		category:       category,
-		capabilityType: capabilityType,
-	}
+func NewPluginServer(capability PluginResource) PluginServer {
+	return PluginServerImpl{capability}
 }
 
 func (p PluginServerImpl) GetGroupVersionKind(req PluginRequest, res *schema.GroupVersionKind) error {
@@ -48,7 +42,7 @@ func (p PluginServerImpl) Build(req PluginRequest, res *BuildResponse) error {
 
 func (p PluginServerImpl) GetCategory(req PluginRequest, res *halkyon.CapabilityCategory) error {
 	p.capability.SetOwner(req.Owner)
-	*res = p.category
+	*res = p.capability.GetSupportedCategory()
 	return nil
 }
 
@@ -60,7 +54,7 @@ func (p PluginServerImpl) GetWatchedResourcesTypes(req PluginRequest, res *[]sch
 
 func (p PluginServerImpl) GetType(req PluginRequest, res *halkyon.CapabilityType) error {
 	p.capability.SetOwner(req.Owner)
-	*res = p.capabilityType
+	*res = p.capability.GetSupportedType()
 	return nil
 }
 

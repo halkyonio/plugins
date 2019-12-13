@@ -2,7 +2,8 @@ package capability
 
 import (
 	"context"
-	"github.com/natefinch/pie"
+	"fmt"
+	"github.com/hashicorp/go-plugin"
 	halkyon "halkyon.io/api/capability/v1beta1"
 	framework "halkyon.io/operator-framework"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -10,8 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"log"
 	"net/rpc"
-	"net/rpc/jsonrpc"
 	"os"
+	"os/exec"
 	"path/filepath"
 )
 
@@ -100,11 +101,30 @@ func (p *PluginClient) GetType() halkyon.CapabilityType {
 }
 
 func NewPlugin(path string) (Plugin, error) {
-	client, err := pie.StartProviderCodec(jsonrpc.NewClientCodec, os.Stderr, path)
+	name := filepath.Base(path)
+
+	// We're a host. Start by launching the plugin process.
+	client := plugin.NewClient(&plugin.ClientConfig{
+		HandshakeConfig: Handshake,
+		Plugins:         map[string]plugin.Plugin{name: &GoPluginPlugin{}},
+		Cmd:             exec.Command(path),
+	})
+	defer client.Kill()
+
+	// Connect via RPC
+	rpcClient, err := client.Client()
 	if err != nil {
-		return nil, err
+		fmt.Println("Error:", err.Error())
+		os.Exit(1)
 	}
-	return &PluginClient{client: client, name: filepath.Base(path)}, nil
+
+	// Request the plugin
+	raw, err := rpcClient.Dispense(name)
+	if err != nil {
+		fmt.Println("Error:", err.Error())
+		os.Exit(1)
+	}
+	return raw.(Plugin), nil
 }
 
 func (p *PluginClient) Build() (runtime.Object, error) {
