@@ -15,6 +15,8 @@ type Plugin interface {
 	GetType() halkyon.CapabilityType
 	GetWatchedResourcesTypes() []schema.GroupVersionKind
 	ReadyFor(owner framework.Resource) framework.DependentResource
+	Init(scheme *runtime.Scheme)
+	Kill()
 }
 
 var _ plugin.Plugin = &GoPluginPlugin{}
@@ -56,6 +58,7 @@ type PluginResource interface {
 	SetOwner(owner framework.Resource)
 	GetSupportedCategory() halkyon.CapabilityCategory
 	GetSupportedType() halkyon.CapabilityType
+	Init(scheme *runtime.Scheme)
 }
 
 type TypeRegistry map[halkyon.CapabilityType]bool

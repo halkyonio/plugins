@@ -17,12 +17,31 @@ import (
 )
 
 type PluginClient struct {
-	client *rpc.Client
-	name   string
-	owner  framework.Resource
+	client   *rpc.Client
+	name     string
+	owner    framework.Resource
+	gpClient *plugin.Client
+}
+
+func (p *PluginClient) Init(scheme *runtime.Scheme) {
+	p.call("Init", scheme, scheme)
+}
+
+func (p *PluginClient) recordGoPluginClient(client *plugin.Client) {
+	p.gpClient = client
+}
+
+type killableClient interface {
+	Plugin
+	recordGoPluginClient(client *plugin.Client)
+}
+
+func (p *PluginClient) Kill() {
+	p.gpClient.Kill()
 }
 
 var _ Plugin = &PluginClient{}
+var _ killableClient = &PluginClient{}
 
 func (p *PluginClient) ReadyFor(owner framework.Resource) framework.DependentResource {
 	return &PluginClient{
@@ -76,7 +95,8 @@ func (p *PluginClient) GetGroupVersionKind() schema.GroupVersionKind {
 }
 
 func (p *PluginClient) call(method string, args interface{}, result interface{}) {
-	err := p.client.Call(p.name+"."+method, args, result)
+	//err := p.client.Call(p.name+"."+method, args, result)
+	err := p.client.Call("Plugin."+method, args, result)
 	if err != nil {
 		log.Fatalf("error calling %s: %v", method, err)
 	}
@@ -109,7 +129,6 @@ func NewPlugin(path string) (Plugin, error) {
 		Plugins:         map[string]plugin.Plugin{name: &GoPluginPlugin{}},
 		Cmd:             exec.Command(path),
 	})
-	defer client.Kill()
 
 	// Connect via RPC
 	rpcClient, err := client.Client()
@@ -124,7 +143,9 @@ func NewPlugin(path string) (Plugin, error) {
 		fmt.Println("Error:", err.Error())
 		os.Exit(1)
 	}
-	return raw.(Plugin), nil
+	p := raw.(killableClient)
+	p.recordGoPluginClient(client)
+	return p, nil
 }
 
 func (p *PluginClient) Build() (runtime.Object, error) {
@@ -159,7 +180,7 @@ func (p *PluginClient) Update(toUpdate runtime.Object) (bool, error) {
 }
 
 func (p *PluginClient) Owner() framework.Resource {
-	panic("implement me")
+	return p.owner
 }
 
 func (p *PluginClient) ShouldBeCheckedForReadiness() bool {
