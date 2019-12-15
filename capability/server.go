@@ -2,7 +2,6 @@ package capability
 
 import (
 	halkyon "halkyon.io/api/capability/v1beta1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -16,16 +15,15 @@ type PluginServer interface {
 	NameFrom(req PluginRequest, res *string) error
 	Update(req PluginRequest, res *UpdateResponse) error
 	GetGroupVersionKind(req PluginRequest, res *schema.GroupVersionKind) error
-	Init(scheme runtime.Scheme, res *runtime.Scheme) error
+	Init(req PluginRequest, res *InitResponse) error
 }
 
 type PluginServerImpl struct {
 	capability PluginResource
 }
 
-func (p PluginServerImpl) Init(scheme runtime.Scheme, res *runtime.Scheme) error {
-	res = &scheme
-	p.capability.Init(res)
+func (p PluginServerImpl) Init(_ PluginRequest, res *InitResponse) error {
+	*res = p.capability.Init()
 	return nil
 }
 
