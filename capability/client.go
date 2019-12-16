@@ -23,12 +23,6 @@ type PluginClient struct {
 	gpClient *plugin.Client
 }
 
-func (p *PluginClient) Init(scheme *runtime.Scheme) {
-	res := &InitResponse{}
-	p.call("Init", PluginRequest{}, res)
-	scheme.AddKnownTypes(res.GroupVersion, res.TypesToRegister...)
-}
-
 func (p *PluginClient) recordGoPluginClient(client *plugin.Client) {
 	p.gpClient = client
 }
