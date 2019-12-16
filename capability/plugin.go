@@ -15,8 +15,11 @@ type Plugin interface {
 	GetType() halkyon.CapabilityType
 	GetWatchedResourcesTypes() []schema.GroupVersionKind
 	ReadyFor(owner framework.Resource) framework.DependentResource
-	Init(scheme *runtime.Scheme)
 	Kill()
+}
+
+type SchemeInitializer interface {
+	Init(scheme *runtime.Scheme)
 }
 
 var _ plugin.Plugin = &GoPluginPlugin{}

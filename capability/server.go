@@ -15,16 +15,10 @@ type PluginServer interface {
 	NameFrom(req PluginRequest, res *string) error
 	Update(req PluginRequest, res *UpdateResponse) error
 	GetGroupVersionKind(req PluginRequest, res *schema.GroupVersionKind) error
-	Init(req PluginRequest, res *InitResponse) error
 }
 
 type PluginServerImpl struct {
 	capability PluginResource
-}
-
-func (p PluginServerImpl) Init(_ PluginRequest, res *InitResponse) error {
-	*res = p.capability.Init()
-	return nil
 }
 
 var _ PluginServer = &PluginServerImpl{}
