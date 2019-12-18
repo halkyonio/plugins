@@ -2,9 +2,11 @@ package capability
 
 import (
 	"context"
+	"encoding/gob"
 	"fmt"
 	"github.com/hashicorp/go-plugin"
 	halkyon "halkyon.io/api/capability/v1beta1"
+	"halkyon.io/api/v1beta1"
 	framework "halkyon.io/operator-framework"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -19,7 +21,7 @@ import (
 type PluginClient struct {
 	client   *rpc.Client
 	name     string
-	owner    framework.Resource
+	owner    *halkyon.Capability
 	gpClient *plugin.Client
 }
 
@@ -39,7 +41,7 @@ func (p *PluginClient) Kill() {
 var _ Plugin = &PluginClient{}
 var _ killableClient = &PluginClient{}
 
-func (p *PluginClient) ReadyFor(owner framework.Resource) framework.DependentResource {
+func (p *PluginClient) ReadyFor(owner *halkyon.Capability) framework.DependentResource {
 	return &PluginClient{
 		client: p.client,
 		name:   p.name,
@@ -48,10 +50,7 @@ func (p *PluginClient) ReadyFor(owner framework.Resource) framework.DependentRes
 }
 
 func (p *PluginClient) Fetch(helper *framework.K8SHelper) (runtime.Object, error) {
-	into, err := helper.Scheme.New(p.GetGroupVersionKind())
-	if err != nil {
-		return nil, err
-	}
+	into := framework.CreateEmptyUnstructured(p.GetGroupVersionKind())
 	if err := helper.Client.Get(context.TODO(), types.NamespacedName{Name: p.Name(), Namespace: p.owner.GetNamespace()}, into); err != nil {
 		return nil, err
 	}
@@ -91,7 +90,6 @@ func (p *PluginClient) GetGroupVersionKind() schema.GroupVersionKind {
 }
 
 func (p *PluginClient) call(method string, args interface{}, result interface{}) {
-	//err := p.client.Call(p.name+"."+method, args, result)
 	err := p.client.Call("Plugin."+method, args, result)
 	if err != nil {
 		log.Fatalf("error calling %s: %v", method, err)
@@ -175,7 +173,7 @@ func (p *PluginClient) Update(toUpdate runtime.Object) (bool, error) {
 	return res.NeedsUpdate, res.Error
 }
 
-func (p *PluginClient) Owner() framework.Resource {
+func (p *PluginClient) Owner() v1beta1.HalkyonResource {
 	return p.owner
 }
 
