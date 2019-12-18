@@ -180,3 +180,7 @@ func (p *PluginClient) Owner() v1beta1.HalkyonResource {
 func (p *PluginClient) ShouldBeCheckedForReadiness() bool {
 	return true
 }
+
+func init() {
+	gob.Register(&halkyon.Capability{})
+}

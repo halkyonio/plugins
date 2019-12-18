@@ -1,7 +1,9 @@
 package capability
 
 import (
+	"encoding/gob"
 	halkyon "halkyon.io/api/capability/v1beta1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -91,4 +93,8 @@ func (p PluginServerImpl) Update(req PluginRequest, res *UpdateResponse) error {
 		Updated:     req.Arg,
 	}
 	return err
+}
+
+func init() {
+	gob.Register(&unstructured.Unstructured{})
 }
