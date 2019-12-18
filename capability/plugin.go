@@ -18,10 +18,6 @@ type Plugin interface {
 	Kill()
 }
 
-type SchemeInitializer interface {
-	Init(scheme *runtime.Scheme)
-}
-
 var _ plugin.Plugin = &GoPluginPlugin{}
 
 type GoPluginPlugin struct {
