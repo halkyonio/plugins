@@ -21,6 +21,7 @@ type Plugin interface {
 var _ plugin.Plugin = &GoPluginPlugin{}
 
 type GoPluginPlugin struct {
+	name     string
 	Delegate PluginResource
 }
 
@@ -29,7 +30,7 @@ func (p *GoPluginPlugin) Server(b *plugin.MuxBroker) (interface{}, error) {
 }
 
 func (p *GoPluginPlugin) Client(b *plugin.MuxBroker, client *rpc.Client) (interface{}, error) {
-	return &PluginClient{client: client}, nil
+	return &PluginClient{name: p.name, client: client}, nil
 }
 
 type PluginRequest struct {
