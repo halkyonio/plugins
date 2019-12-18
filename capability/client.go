@@ -144,7 +144,7 @@ func NewPlugin(path string) (Plugin, error) {
 
 func (p *PluginClient) Build() (runtime.Object, error) {
 	b := &BuildResponse{}
-	p.call("Build", nil, b)
+	p.call("Build", PluginRequest{Owner: p.owner}, b)
 	return b.Built, nil
 }
 
