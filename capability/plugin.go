@@ -3,6 +3,7 @@ package capability
 import (
 	"github.com/hashicorp/go-plugin"
 	halkyon "halkyon.io/api/capability/v1beta1"
+	"halkyon.io/api/v1beta1"
 	framework "halkyon.io/operator-framework"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,7 +15,7 @@ type Plugin interface {
 	GetCategory() halkyon.CapabilityCategory
 	GetType() halkyon.CapabilityType
 	GetWatchedResourcesTypes() []schema.GroupVersionKind
-	ReadyFor(owner framework.Resource) framework.DependentResource
+	ReadyFor(owner *halkyon.Capability) framework.DependentResource
 	Kill()
 }
 
@@ -34,7 +35,7 @@ func (p *GoPluginPlugin) Client(b *plugin.MuxBroker, client *rpc.Client) (interf
 }
 
 type PluginRequest struct {
-	Owner framework.Resource
+	Owner *halkyon.Capability
 	Arg   runtime.Object
 }
 
@@ -60,7 +61,7 @@ type InitResponse struct {
 
 type PluginResource interface {
 	framework.DependentResource
-	SetOwner(owner framework.Resource)
+	SetOwner(owner v1beta1.HalkyonResource)
 	GetSupportedCategory() halkyon.CapabilityCategory
 	GetSupportedType() halkyon.CapabilityType
 	Init() InitResponse
