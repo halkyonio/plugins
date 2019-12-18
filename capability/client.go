@@ -122,7 +122,7 @@ func NewPlugin(path string) (Plugin, error) {
 	// We're a host. Start by launching the plugin process.
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: Handshake,
-		Plugins:         map[string]plugin.Plugin{name: &GoPluginPlugin{}},
+		Plugins:         map[string]plugin.Plugin{name: &GoPluginPlugin{name: name}},
 		Cmd:             exec.Command(path),
 	})
 
