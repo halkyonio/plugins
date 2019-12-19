@@ -39,19 +39,19 @@ func (p *PluginClient) recordGoPluginClient(client *plugin.Client) {
 
 func (p *PluginClient) GetCategory() halkyon.CapabilityCategory {
 	var cat halkyon.CapabilityCategory
-	p.call("GetCategory", PluginRequest{}, &cat)
+	p.call("GetCategory", &cat)
 	return cat
 }
 
 func (p *PluginClient) GetType() halkyon.CapabilityType {
 	var res halkyon.CapabilityType
-	p.call("GetType", PluginRequest{}, &res)
+	p.call("GetType", &res)
 	return res
 }
 
 func (p *PluginClient) GetWatchedResourcesTypes() []schema.GroupVersionKind {
 	var res []schema.GroupVersionKind
-	p.call("GetWatchedResourcesTypes", PluginRequest{}, &res)
+	p.call("GetWatchedResourcesTypes", &res)
 	return res
 }
 
@@ -97,43 +97,43 @@ func (p *PluginClient) ShouldBeOwned() bool {
 
 func (p *PluginClient) OwnerStatusField() string {
 	res := ""
-	p.call("OwnerStatusField", PluginRequest{}, &res)
+	p.call("OwnerStatusField", &res)
 	return res
 }
 
 func (p *PluginClient) GetGroupVersionKind() schema.GroupVersionKind {
 	var res schema.GroupVersionKind
-	p.call("GetGroupVersionKind", PluginRequest{}, &res)
+	p.call("GetGroupVersionKind", &res)
 	return res
 }
 
 func (p *PluginClient) Build() (runtime.Object, error) {
 	b := &BuildResponse{}
-	p.call("Build", PluginRequest{Owner: p.owner}, b)
+	p.call("Build", b)
 	return b.Built, nil
 }
 
 func (p *PluginClient) IsReady(underlying runtime.Object) (ready bool, message string) {
 	res := IsReadyResponse{}
-	p.call("IsReady", underlying, &res)
+	p.call("IsReady", &res, underlying)
 	return res.Ready, res.Message
 }
 
 func (p *PluginClient) Name() string {
 	res := ""
-	p.call("Name", PluginRequest{Owner: p.owner}, &res)
+	p.call("Name", &res)
 	return res
 }
 
 func (p *PluginClient) NameFrom(underlying runtime.Object) string {
 	res := ""
-	p.call("NameFrom", underlying, &res)
+	p.call("NameFrom", &res, underlying)
 	return res
 }
 
 func (p *PluginClient) Update(toUpdate runtime.Object) (bool, error) {
 	res := UpdateResponse{}
-	p.call("Update", toUpdate, &res)
+	p.call("Update", &res, toUpdate)
 	toUpdate = res.Updated
 	return res.NeedsUpdate, res.Error
 }
@@ -174,8 +174,15 @@ func NewPlugin(path string) (Plugin, error) {
 	return p, nil
 }
 
-func (p *PluginClient) call(method string, args interface{}, result interface{}) {
-	err := p.client.Call("Plugin."+method, args, result)
+func (p *PluginClient) call(method string, result interface{}, underlying ...runtime.Object) {
+	if len(underlying) > 1 {
+		log.Fatalf("error calling %s on %s plugin: call only accepts one extra argument, was given %v", method, p.name, underlying)
+	}
+	request := PluginRequest{Owner: p.owner}
+	if len(underlying) == 1 {
+		request.Arg = underlying[0]
+	}
+	err := p.client.Call("Plugin."+method, request, result)
 	if err != nil {
 		log.Fatalf("error calling %s on %s plugin: %v", method, p.name, err)
 	}
