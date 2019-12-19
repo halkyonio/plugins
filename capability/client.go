@@ -25,21 +25,39 @@ type PluginClient struct {
 	gpClient *plugin.Client
 }
 
-func (p *PluginClient) recordGoPluginClient(client *plugin.Client) {
-	p.gpClient = client
-}
+var _ Plugin = &PluginClient{}
+var _ killableClient = &PluginClient{}
 
 type killableClient interface {
 	Plugin
 	recordGoPluginClient(client *plugin.Client)
 }
 
+func (p *PluginClient) recordGoPluginClient(client *plugin.Client) {
+	p.gpClient = client
+}
+
+func (p *PluginClient) GetCategory() halkyon.CapabilityCategory {
+	var cat halkyon.CapabilityCategory
+	p.call("GetCategory", PluginRequest{}, &cat)
+	return cat
+}
+
+func (p *PluginClient) GetType() halkyon.CapabilityType {
+	var res halkyon.CapabilityType
+	p.call("GetType", PluginRequest{}, &res)
+	return res
+}
+
+func (p *PluginClient) GetWatchedResourcesTypes() []schema.GroupVersionKind {
+	var res []schema.GroupVersionKind
+	p.call("GetWatchedResourcesTypes", PluginRequest{}, &res)
+	return res
+}
+
 func (p *PluginClient) Kill() {
 	p.gpClient.Kill()
 }
-
-var _ Plugin = &PluginClient{}
-var _ killableClient = &PluginClient{}
 
 func (p *PluginClient) ReadyFor(owner *halkyon.Capability) framework.DependentResource {
 	return &PluginClient{
@@ -89,59 +107,6 @@ func (p *PluginClient) GetGroupVersionKind() schema.GroupVersionKind {
 	return res
 }
 
-func (p *PluginClient) call(method string, args interface{}, result interface{}) {
-	err := p.client.Call("Plugin."+method, args, result)
-	if err != nil {
-		log.Fatalf("error calling %s: %v", method, err)
-	}
-}
-
-func (p *PluginClient) GetCategory() halkyon.CapabilityCategory {
-	var cat halkyon.CapabilityCategory
-	p.call("GetCategory", PluginRequest{}, &cat)
-	return cat
-}
-
-func (p *PluginClient) GetWatchedResourcesTypes() []schema.GroupVersionKind {
-	var res []schema.GroupVersionKind
-	p.call("GetWatchedResourcesTypes", PluginRequest{}, &res)
-	return res
-}
-
-func (p *PluginClient) GetType() halkyon.CapabilityType {
-	var res halkyon.CapabilityType
-	p.call("GetType", PluginRequest{}, &res)
-	return res
-}
-
-func NewPlugin(path string) (Plugin, error) {
-	name := filepath.Base(path)
-
-	// We're a host. Start by launching the plugin process.
-	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: Handshake,
-		Plugins:         map[string]plugin.Plugin{name: &GoPluginPlugin{name: name}},
-		Cmd:             exec.Command(path),
-	})
-
-	// Connect via RPC
-	rpcClient, err := client.Client()
-	if err != nil {
-		fmt.Println("Error:", err.Error())
-		os.Exit(1)
-	}
-
-	// Request the plugin
-	raw, err := rpcClient.Dispense(name)
-	if err != nil {
-		fmt.Println("Error:", err.Error())
-		os.Exit(1)
-	}
-	p := raw.(killableClient)
-	p.recordGoPluginClient(client)
-	return p, nil
-}
-
 func (p *PluginClient) Build() (runtime.Object, error) {
 	b := &BuildResponse{}
 	p.call("Build", PluginRequest{Owner: p.owner}, b)
@@ -179,6 +144,41 @@ func (p *PluginClient) Owner() v1beta1.HalkyonResource {
 
 func (p *PluginClient) ShouldBeCheckedForReadiness() bool {
 	return true
+}
+
+func NewPlugin(path string) (Plugin, error) {
+	name := filepath.Base(path)
+
+	// We're a host. Start by launching the plugin process.
+	client := plugin.NewClient(&plugin.ClientConfig{
+		HandshakeConfig: Handshake,
+		Plugins:         map[string]plugin.Plugin{name: &GoPluginPlugin{name: name}},
+		Cmd:             exec.Command(path),
+	})
+
+	// Connect via RPC
+	rpcClient, err := client.Client()
+	if err != nil {
+		fmt.Println("Error:", err.Error())
+		os.Exit(1)
+	}
+
+	// Request the plugin
+	raw, err := rpcClient.Dispense(name)
+	if err != nil {
+		fmt.Println("Error:", err.Error())
+		os.Exit(1)
+	}
+	p := raw.(killableClient)
+	p.recordGoPluginClient(client)
+	return p, nil
+}
+
+func (p *PluginClient) call(method string, args interface{}, result interface{}) {
+	err := p.client.Call("Plugin."+method, args, result)
+	if err != nil {
+		log.Fatalf("error calling %s on %s plugin: %v", method, p.name, err)
+	}
 }
 
 func init() {
