@@ -54,17 +54,11 @@ type BuildResponse struct {
 	Built runtime.Object
 }
 
-type InitResponse struct {
-	TypesToRegister []runtime.Object
-	GroupVersion    schema.GroupVersion
-}
-
 type PluginResource interface {
 	framework.DependentResource
 	SetOwner(owner v1beta1.HalkyonResource)
 	GetSupportedCategory() halkyon.CapabilityCategory
 	GetSupportedType() halkyon.CapabilityType
-	Init() InitResponse
 }
 
 type TypeRegistry map[halkyon.CapabilityType]bool
