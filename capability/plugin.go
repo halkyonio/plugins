@@ -5,6 +5,7 @@ import (
 	halkyon "halkyon.io/api/capability/v1beta1"
 	"halkyon.io/api/v1beta1"
 	framework "halkyon.io/operator-framework"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/rpc"
@@ -36,7 +37,27 @@ func (p *GoPluginPlugin) Client(b *plugin.MuxBroker, client *rpc.Client) (interf
 
 type PluginRequest struct {
 	Owner *halkyon.Capability
-	Arg   runtime.Object
+	Arg   *unstructured.Unstructured
+}
+
+func (p *PluginRequest) setArg(object runtime.Object) {
+	u, ok := object.(*unstructured.Unstructured)
+	if !ok {
+		uns, e := framework.CreateUnstructuredObject(object, object.GetObjectKind().GroupVersionKind())
+		if e != nil {
+			panic(e)
+		}
+		u = uns.(*unstructured.Unstructured)
+	}
+	p.Arg = u
+}
+
+func (p *PluginRequest) getArg(object runtime.Object) runtime.Object {
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(p.Arg.Object, object)
+	if err != nil {
+		panic(err)
+	}
+	return object
 }
 
 type IsReadyResponse struct {
@@ -59,6 +80,7 @@ type PluginResource interface {
 	SetOwner(owner v1beta1.HalkyonResource)
 	GetSupportedCategory() halkyon.CapabilityCategory
 	GetSupportedType() halkyon.CapabilityType
+	GetPrototype() runtime.Object
 }
 
 type TypeRegistry map[halkyon.CapabilityType]bool

@@ -62,7 +62,7 @@ func (p PluginServerImpl) GetType(req PluginRequest, res *halkyon.CapabilityType
 
 func (p PluginServerImpl) IsReady(req PluginRequest, res *IsReadyResponse) error {
 	p.capability.SetOwner(req.Owner)
-	ready, message := p.capability.IsReady(req.Arg)
+	ready, message := p.capability.IsReady(req.getArg(p.capability.GetPrototype()))
 	*res = IsReadyResponse{
 		Ready:   ready,
 		Message: message,
@@ -79,14 +79,14 @@ func (p PluginServerImpl) Name(req PluginRequest, res *string) error {
 
 func (p PluginServerImpl) NameFrom(req PluginRequest, res *string) error {
 	p.capability.SetOwner(req.Owner)
-	name := p.capability.NameFrom(req.Arg)
+	name := p.capability.NameFrom(req.getArg(p.capability.GetPrototype()))
 	*res = name
 	return nil
 }
 
 func (p PluginServerImpl) Update(req PluginRequest, res *UpdateResponse) error {
 	p.capability.SetOwner(req.Owner)
-	update, err := p.capability.Update(req.Arg)
+	update, err := p.capability.Update(req.getArg(p.capability.GetPrototype()))
 	*res = UpdateResponse{
 		NeedsUpdate: update,
 		Error:       err,
