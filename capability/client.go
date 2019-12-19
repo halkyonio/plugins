@@ -180,7 +180,7 @@ func (p *PluginClient) call(method string, result interface{}, underlying ...run
 	}
 	request := PluginRequest{Owner: p.owner}
 	if len(underlying) == 1 {
-		request.Arg = underlying[0]
+		request.setArg(underlying[0])
 	}
 	err := p.client.Call("Plugin."+method, request, result)
 	if err != nil {
