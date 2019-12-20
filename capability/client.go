@@ -96,9 +96,7 @@ func (p *PluginClient) ShouldBeOwned() bool {
 }
 
 func (p *PluginClient) OwnerStatusField() string {
-	res := ""
-	p.call("OwnerStatusField", &res)
-	return res
+	return "PodName" // todo: do not hardcode this value
 }
 
 func (p *PluginClient) GetGroupVersionKind() schema.GroupVersionKind {
