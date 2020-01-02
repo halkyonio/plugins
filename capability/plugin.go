@@ -12,11 +12,10 @@ import (
 )
 
 type Plugin interface {
-	framework.DependentResource
 	GetCategory() halkyon.CapabilityCategory
 	GetType() halkyon.CapabilityType
 	GetWatchedResourcesTypes() []schema.GroupVersionKind
-	ReadyFor(owner *halkyon.Capability) framework.DependentResource
+	ReadyFor(owner *halkyon.Capability) []framework.DependentResource
 	Kill()
 }
 
@@ -36,8 +35,9 @@ func (p *GoPluginPlugin) Client(b *plugin.MuxBroker, client *rpc.Client) (interf
 }
 
 type PluginRequest struct {
-	Owner *halkyon.Capability
-	Arg   *unstructured.Unstructured
+	Owner  v1beta1.HalkyonResource
+	Target schema.GroupVersionKind
+	Arg    *unstructured.Unstructured
 }
 
 func (p *PluginRequest) setArg(object runtime.Object) {
@@ -76,11 +76,9 @@ type BuildResponse struct {
 }
 
 type PluginResource interface {
-	framework.DependentResource
-	SetOwner(owner v1beta1.HalkyonResource)
 	GetSupportedCategory() halkyon.CapabilityCategory
 	GetSupportedType() halkyon.CapabilityType
-	GetPrototype() runtime.Object
+	GetDependentResourcesWith(owner v1beta1.HalkyonResource) map[schema.GroupVersionKind]framework.DependentResource
 }
 
 type TypeRegistry map[halkyon.CapabilityType]bool
