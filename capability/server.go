@@ -2,8 +2,11 @@ package capability
 
 import (
 	"encoding/gob"
+	"fmt"
 	halkyon "halkyon.io/api/capability/v1beta1"
+	framework "halkyon.io/operator-framework"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -16,7 +19,6 @@ type PluginServer interface {
 	Name(req PluginRequest, res *string) error
 	NameFrom(req PluginRequest, res *string) error
 	Update(req PluginRequest, res *UpdateResponse) error
-	GetGroupVersionKind(req PluginRequest, res *schema.GroupVersionKind) error
 }
 
 type PluginServerImpl struct {
@@ -29,40 +31,37 @@ func NewPluginServer(capability PluginResource) PluginServer {
 	return PluginServerImpl{capability}
 }
 
-func (p PluginServerImpl) GetGroupVersionKind(req PluginRequest, res *schema.GroupVersionKind) error {
-	p.capability.SetOwner(req.Owner)
-	*res = p.capability.GetGroupVersionKind()
-	return nil
-}
-
 func (p PluginServerImpl) Build(req PluginRequest, res *BuildResponse) error {
-	p.capability.SetOwner(req.Owner)
-	build, err := p.capability.Build()
+	resource := p.dependentResourceFor(req)
+	build, err := resource.Build(false)
 	res.Built = build
 	return err
 }
 
-func (p PluginServerImpl) GetCategory(req PluginRequest, res *halkyon.CapabilityCategory) error {
-	p.capability.SetOwner(req.Owner)
+func (p PluginServerImpl) GetCategory(_ PluginRequest, res *halkyon.CapabilityCategory) error {
 	*res = p.capability.GetSupportedCategory()
 	return nil
 }
 
 func (p PluginServerImpl) GetWatchedResourcesTypes(req PluginRequest, res *[]schema.GroupVersionKind) error {
-	p.capability.SetOwner(req.Owner)
-	*res = []schema.GroupVersionKind{p.capability.GetGroupVersionKind()}
+	dependents := p.capability.GetDependentResourcesWith(req.Owner)
+	*res = make([]schema.GroupVersionKind, 0, len(dependents))
+	for kind, resource := range dependents {
+		if resource.GetConfig().Watched {
+			*res = append(*res, kind)
+		}
+	}
 	return nil
 }
 
-func (p PluginServerImpl) GetType(req PluginRequest, res *halkyon.CapabilityType) error {
-	p.capability.SetOwner(req.Owner)
+func (p PluginServerImpl) GetType(_ PluginRequest, res *halkyon.CapabilityType) error {
 	*res = p.capability.GetSupportedType()
 	return nil
 }
 
 func (p PluginServerImpl) IsReady(req PluginRequest, res *IsReadyResponse) error {
-	p.capability.SetOwner(req.Owner)
-	ready, message := p.capability.IsReady(req.getArg(p.capability.GetPrototype()))
+	resource := p.dependentResourceFor(req)
+	ready, message := resource.IsReady(requestedArg(resource, req))
 	*res = IsReadyResponse{
 		Ready:   ready,
 		Message: message,
@@ -71,28 +70,39 @@ func (p PluginServerImpl) IsReady(req PluginRequest, res *IsReadyResponse) error
 }
 
 func (p PluginServerImpl) Name(req PluginRequest, res *string) error {
-	p.capability.SetOwner(req.Owner)
-	name := p.capability.Name()
-	*res = name
+	resource := p.dependentResourceFor(req)
+	*res = resource.Name()
 	return nil
 }
 
 func (p PluginServerImpl) NameFrom(req PluginRequest, res *string) error {
-	p.capability.SetOwner(req.Owner)
-	name := p.capability.NameFrom(req.getArg(p.capability.GetPrototype()))
-	*res = name
+	resource := p.dependentResourceFor(req)
+	*res = resource.NameFrom(requestedArg(resource, req))
 	return nil
 }
 
 func (p PluginServerImpl) Update(req PluginRequest, res *UpdateResponse) error {
-	p.capability.SetOwner(req.Owner)
-	update, err := p.capability.Update(req.getArg(p.capability.GetPrototype()))
+	resource := p.dependentResourceFor(req)
+	update, err := resource.Update(requestedArg(resource, req))
 	*res = UpdateResponse{
 		NeedsUpdate: update,
 		Error:       err,
 		Updated:     req.Arg,
 	}
 	return err
+}
+
+func (p PluginServerImpl) dependentResourceFor(req PluginRequest) framework.DependentResource {
+	dependents := p.capability.GetDependentResourcesWith(req.Owner)
+	if resource, ok := dependents[req.Target]; ok {
+		return resource
+	}
+	panic(fmt.Errorf("no dependent of type %v for plugin %v/%v", req.Target, p.capability.GetSupportedCategory(), p.capability.GetSupportedType()))
+}
+
+func requestedArg(dependent framework.DependentResource, req PluginRequest) runtime.Object {
+	build, _ := dependent.Build(true)
+	return req.getArg(build)
 }
 
 func init() {

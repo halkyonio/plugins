@@ -28,6 +28,8 @@ type PluginClient struct {
 var _ Plugin = &PluginClient{}
 var _ killableClient = &PluginClient{}
 
+var emptyGVK = schema.GroupVersionKind{}
+
 type killableClient interface {
 	Plugin
 	recordGoPluginClient(client *plugin.Client)
@@ -39,19 +41,19 @@ func (p *PluginClient) recordGoPluginClient(client *plugin.Client) {
 
 func (p *PluginClient) GetCategory() halkyon.CapabilityCategory {
 	var cat halkyon.CapabilityCategory
-	p.call("GetCategory", &cat)
+	p.call("GetCategory", emptyGVK, &cat)
 	return cat
 }
 
 func (p *PluginClient) GetType() halkyon.CapabilityType {
 	var res halkyon.CapabilityType
-	p.call("GetType", &res)
+	p.call("GetType", emptyGVK, &res)
 	return res
 }
 
 func (p *PluginClient) GetWatchedResourcesTypes() []schema.GroupVersionKind {
 	var res []schema.GroupVersionKind
-	p.call("GetWatchedResourcesTypes", &res)
+	p.call("GetWatchedResourcesTypes", emptyGVK, &res)
 	return res
 }
 
@@ -59,89 +61,75 @@ func (p *PluginClient) Kill() {
 	p.gpClient.Kill()
 }
 
-func (p *PluginClient) ReadyFor(owner *halkyon.Capability) framework.DependentResource {
-	return &PluginClient{
-		client: p.client,
-		name:   p.name,
-		owner:  owner,
+func (p *PluginClient) ReadyFor(owner *halkyon.Capability) []framework.DependentResource {
+	resourcesTypes := p.GetWatchedResourcesTypes()
+	depRes := make([]framework.DependentResource, 0, len(resourcesTypes))
+	for _, rt := range resourcesTypes {
+		depRes = append(depRes, &PluginDependentResource{client: p, gvk: rt, owner: owner})
 	}
+	return depRes
 }
 
-func (p *PluginClient) Fetch(helper *framework.K8SHelper) (runtime.Object, error) {
-	into := framework.CreateEmptyUnstructured(p.GetGroupVersionKind())
+type PluginDependentResource struct {
+	client *PluginClient
+	config *framework.DependentResourceConfig
+	gvk    schema.GroupVersionKind
+	owner  v1beta1.HalkyonResource
+	name   *string
+}
+
+var _ framework.DependentResource = &PluginDependentResource{}
+
+func (p *PluginDependentResource) Name() string {
+	if p.name == nil {
+		p.client.call("Name", p.gvk, p.name)
+	}
+	return *p.name
+}
+
+func (p PluginDependentResource) Owner() v1beta1.HalkyonResource {
+	return p.owner
+}
+
+func (p PluginDependentResource) NameFrom(underlying runtime.Object) string {
+	res := ""
+	p.client.call("NameFrom", p.gvk, &res, underlying)
+	return res
+}
+
+func (p PluginDependentResource) Fetch(helper *framework.K8SHelper) (runtime.Object, error) {
+	into := framework.CreateEmptyUnstructured(p.GetConfig().GroupVersionKind)
 	if err := helper.Client.Get(context.TODO(), types.NamespacedName{Name: p.Name(), Namespace: p.owner.GetNamespace()}, into); err != nil {
 		return nil, err
 	}
 	return into, nil
 }
 
-func (p *PluginClient) GetTypeName() string {
-	return p.name
-}
-
-func (p *PluginClient) ShouldWatch() bool {
-	return true
-}
-
-func (p *PluginClient) CanBeCreatedOrUpdated() bool {
-	return true
-}
-
-func (p *PluginClient) CreateOrUpdate(helper *framework.K8SHelper) error {
-	return framework.CreateOrUpdate(p, helper)
-}
-
-func (p *PluginClient) ShouldBeOwned() bool {
-	return true
-}
-
-func (p *PluginClient) OwnerStatusField() string {
-	return "PodName" // todo: do not hardcode this value
-}
-
-func (p *PluginClient) GetGroupVersionKind() schema.GroupVersionKind {
-	var res schema.GroupVersionKind
-	p.call("GetGroupVersionKind", &res)
-	return res
-}
-
-func (p *PluginClient) Build() (runtime.Object, error) {
+func (p PluginDependentResource) Build(_ bool) (runtime.Object, error) {
 	b := &BuildResponse{}
-	p.call("Build", b)
+	p.client.call("Build", p.gvk, b)
 	return b.Built, nil
 }
 
-func (p *PluginClient) IsReady(underlying runtime.Object) (ready bool, message string) {
-	res := IsReadyResponse{}
-	p.call("IsReady", &res, underlying)
-	return res.Ready, res.Message
-}
-
-func (p *PluginClient) Name() string {
-	res := ""
-	p.call("Name", &res)
-	return res
-}
-
-func (p *PluginClient) NameFrom(underlying runtime.Object) string {
-	res := ""
-	p.call("NameFrom", &res, underlying)
-	return res
-}
-
-func (p *PluginClient) Update(toUpdate runtime.Object) (bool, error) {
+func (p PluginDependentResource) Update(toUpdate runtime.Object) (bool, error) {
 	res := UpdateResponse{}
-	p.call("Update", &res, toUpdate)
+	p.client.call("Update", p.gvk, &res, toUpdate)
 	toUpdate = res.Updated
 	return res.NeedsUpdate, res.Error
 }
 
-func (p *PluginClient) Owner() v1beta1.HalkyonResource {
-	return p.owner
+func (p PluginDependentResource) IsReady(underlying runtime.Object) (ready bool, message string) {
+	res := IsReadyResponse{}
+	p.client.call("IsReady", p.gvk, &res, underlying)
+	return res.Ready, res.Message
+
 }
 
-func (p *PluginClient) ShouldBeCheckedForReadiness() bool {
-	return true
+func (p *PluginDependentResource) GetConfig() framework.DependentResourceConfig {
+	if p.config == nil {
+		p.client.call("GetConfig", p.gvk, p.config)
+	}
+	return *p.config
 }
 
 func NewPlugin(path string) (Plugin, error) {
@@ -172,11 +160,14 @@ func NewPlugin(path string) (Plugin, error) {
 	return p, nil
 }
 
-func (p *PluginClient) call(method string, result interface{}, underlying ...runtime.Object) {
+func (p *PluginClient) call(method string, targetDependentType schema.GroupVersionKind, result interface{}, underlying ...runtime.Object) {
 	if len(underlying) > 1 {
 		log.Fatalf("error calling %s on %s plugin: call only accepts one extra argument, was given %v", method, p.name, underlying)
 	}
 	request := PluginRequest{Owner: p.owner}
+	if !targetDependentType.Empty() {
+		request.Target = targetDependentType
+	}
 	if len(underlying) == 1 {
 		request.setArg(underlying[0])
 	}

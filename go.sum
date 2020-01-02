@@ -365,6 +365,8 @@ halkyon.io/operator-framework v0.0.0-20191218162228-8520e4863185 h1:QJEFHg8V/VLn
 halkyon.io/operator-framework v0.0.0-20191218162228-8520e4863185/go.mod h1:ttZP+C3QKAFQWu2+9G8CMxznFWJ14LAgDWmpkgHW1ec=
 halkyon.io/operator-framework v0.0.0-20191220094645-78d6d8666a50 h1:4gCsA9yb3Z1RHyLAz4ZaBwQFIYczbdmS4tucAKuShZg=
 halkyon.io/operator-framework v0.0.0-20191220094645-78d6d8666a50/go.mod h1:igemGhmhyDR1wXrKdJZRCg9tZGPUthqlTfuvcP0r808=
+halkyon.io/operator-framework v0.0.0-20200102215814-202e364c4941 h1:46zBfzWUJ6U2m1AYuByIEfi8OxMvP1KsMsnbOM8jZOY=
+halkyon.io/operator-framework v0.0.0-20200102215814-202e364c4941/go.mod h1:igemGhmhyDR1wXrKdJZRCg9tZGPUthqlTfuvcP0r808=
 k8s.io/api v0.0.0-20190725062911-6607c48751ae/go.mod h1:1O0xzX/RAtnm7l+5VEUxZ1ysO2ghatfq/OZED4zM9kA=
 k8s.io/api v0.0.0-20190918195907-bd6ac527cfd2 h1:bkwe5LsuANqyOwsBng5Qc4S91D2Tv0JHctAztt3YTQs=
 k8s.io/api v0.0.0-20190918195907-bd6ac527cfd2/go.mod h1:AOxZTnaXR/xiarlQL0JUfwQPxjmKDvVYoRp58cA7lUo=
