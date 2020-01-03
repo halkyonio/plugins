@@ -65,7 +65,12 @@ func (p *PluginClient) ReadyFor(owner *halkyon.Capability) []framework.Dependent
 	resourcesTypes := p.GetWatchedResourcesTypes()
 	depRes := make([]framework.DependentResource, 0, len(resourcesTypes))
 	for _, rt := range resourcesTypes {
-		depRes = append(depRes, &PluginDependentResource{client: p, gvk: rt, owner: owner})
+		client := &PluginClient{
+			client: p.client,
+			name:   p.name,
+			owner:  owner,
+		}
+		depRes = append(depRes, &PluginDependentResource{client: client, gvk: rt, owner: owner})
 	}
 	return depRes
 }
@@ -164,7 +169,10 @@ func (p *PluginClient) call(method string, targetDependentType schema.GroupVersi
 	if len(underlying) > 1 {
 		log.Fatalf("error calling %s on %s plugin: call only accepts one extra argument, was given %v", method, p.name, underlying)
 	}
-	request := PluginRequest{Owner: p.owner}
+	request := PluginRequest{}
+	if p.owner != nil {
+		request.Owner = p.owner
+	}
 	if !targetDependentType.Empty() {
 		request.Target = targetDependentType
 	}
