@@ -41,7 +41,10 @@ func NewPluginServer(capability PluginResource) PluginServer {
 func (p PluginServerImpl) Build(req PluginRequest, res *BuildResponse) error {
 	resource := p.dependentResourceFor(req)
 	build, err := resource.Build(false)
-	res.Built = build
+	if err != nil {
+		return err
+	}
+	res.Built, err = framework.CreateUnstructuredObject(build, req.Target)
 	return err
 }
 
