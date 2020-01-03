@@ -88,7 +88,9 @@ var _ framework.DependentResource = &PluginDependentResource{}
 
 func (p *PluginDependentResource) Name() string {
 	if p.name == nil {
-		p.client.call("Name", p.gvk, p.name)
+		name := ""
+		p.client.call("Name", p.gvk, &name)
+		p.name = &name
 	}
 	return *p.name
 }
@@ -133,7 +135,9 @@ func (p PluginDependentResource) IsReady(underlying runtime.Object) (ready bool,
 
 func (p *PluginDependentResource) GetConfig() framework.DependentResourceConfig {
 	if p.config == nil {
-		p.client.call("GetConfig", p.gvk, p.config)
+		config := &framework.DependentResourceConfig{}
+		p.client.call("GetConfig", p.gvk, config)
+		p.config = config
 	}
 	return *p.config
 }
