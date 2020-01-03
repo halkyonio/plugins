@@ -51,8 +51,9 @@ func (p *PluginClient) GetType() halkyon.CapabilityType {
 	return res
 }
 
-func (p *PluginClient) GetWatchedResourcesTypes() []schema.GroupVersionKind {
+func (p *PluginClient) GetWatchedResourcesTypes(owner *halkyon.Capability) []schema.GroupVersionKind {
 	var res []schema.GroupVersionKind
+	p.owner = owner
 	p.call("GetWatchedResourcesTypes", emptyGVK, &res)
 	return res
 }
@@ -62,14 +63,14 @@ func (p *PluginClient) Kill() {
 }
 
 func (p *PluginClient) ReadyFor(owner *halkyon.Capability) []framework.DependentResource {
-	resourcesTypes := p.GetWatchedResourcesTypes()
+	client := &PluginClient{
+		client: p.client,
+		name:   p.name,
+		owner:  owner,
+	}
+	resourcesTypes := client.GetWatchedResourcesTypes(owner)
 	depRes := make([]framework.DependentResource, 0, len(resourcesTypes))
 	for _, rt := range resourcesTypes {
-		client := &PluginClient{
-			client: p.client,
-			name:   p.name,
-			owner:  owner,
-		}
 		depRes = append(depRes, &PluginDependentResource{client: client, gvk: rt, owner: owner})
 	}
 	return depRes

@@ -14,7 +14,7 @@ import (
 type Plugin interface {
 	GetCategory() halkyon.CapabilityCategory
 	GetType() halkyon.CapabilityType
-	GetWatchedResourcesTypes() []schema.GroupVersionKind
+	GetWatchedResourcesTypes(owner *halkyon.Capability) []schema.GroupVersionKind
 	ReadyFor(owner *halkyon.Capability) []framework.DependentResource
 	Kill()
 }
