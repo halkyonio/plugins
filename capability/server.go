@@ -19,10 +19,17 @@ type PluginServer interface {
 	Name(req PluginRequest, res *string) error
 	NameFrom(req PluginRequest, res *string) error
 	Update(req PluginRequest, res *UpdateResponse) error
+	GetConfig(req PluginRequest, res *framework.DependentResourceConfig) error
 }
 
 type PluginServerImpl struct {
 	capability PluginResource
+}
+
+func (p PluginServerImpl) GetConfig(req PluginRequest, res *framework.DependentResourceConfig) error {
+	resource := p.dependentResourceFor(req)
+	*res = resource.GetConfig()
+	return nil
 }
 
 var _ PluginServer = &PluginServerImpl{}
