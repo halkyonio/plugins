@@ -19,10 +19,12 @@ import (
 )
 
 type PluginClient struct {
-	client   *rpc.Client
-	name     string
-	owner    *halkyon.Capability
-	gpClient *plugin.Client
+	client      *rpc.Client
+	name        string
+	owner       *halkyon.Capability
+	gpClient    *plugin.Client
+	capCategory *halkyon.CapabilityCategory
+	capType     *halkyon.CapabilityType
 }
 
 var _ Plugin = &PluginClient{}
@@ -40,15 +42,21 @@ func (p *PluginClient) recordGoPluginClient(client *plugin.Client) {
 }
 
 func (p *PluginClient) GetCategory() halkyon.CapabilityCategory {
-	var cat halkyon.CapabilityCategory
-	p.call("GetCategory", emptyGVK, &cat)
-	return cat
+	if p.capCategory == nil {
+		var cat halkyon.CapabilityCategory
+		p.call("GetCategory", emptyGVK, &cat)
+		p.capCategory = &cat
+	}
+	return *p.capCategory
 }
 
 func (p *PluginClient) GetType() halkyon.CapabilityType {
-	var res halkyon.CapabilityType
-	p.call("GetType", emptyGVK, &res)
-	return res
+	if p.capType == nil {
+		var res halkyon.CapabilityType
+		p.call("GetType", emptyGVK, &res)
+		p.capType = &res
+	}
+	return *p.capType
 }
 
 func (p *PluginClient) GetWatchedResourcesTypes(owner *halkyon.Capability) []schema.GroupVersionKind {
