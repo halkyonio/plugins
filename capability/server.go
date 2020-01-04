@@ -56,8 +56,8 @@ func (p PluginServerImpl) GetCategory(_ PluginRequest, res *halkyon.CapabilityCa
 func (p PluginServerImpl) GetDependentResourceTypes(req PluginRequest, res *[]schema.GroupVersionKind) error {
 	dependents := p.capability.GetDependentResourcesWith(req.Owner)
 	*res = make([]schema.GroupVersionKind, 0, len(dependents))
-	for kind := range dependents {
-		*res = append(*res, kind)
+	for _, dependent := range dependents {
+		*res = append(*res, dependent.GetConfig().GroupVersionKind)
 	}
 	return nil
 }
@@ -102,8 +102,10 @@ func (p PluginServerImpl) Update(req PluginRequest, res *UpdateResponse) error {
 
 func (p PluginServerImpl) dependentResourceFor(req PluginRequest) framework.DependentResource {
 	dependents := p.capability.GetDependentResourcesWith(req.Owner)
-	if resource, ok := dependents[req.Target]; ok {
-		return resource
+	for _, dependent := range dependents {
+		if dependent.GetConfig().GroupVersionKind == req.Target {
+			return dependent
+		}
 	}
 	panic(fmt.Errorf("no dependent of type %v for plugin %v/%v", req.Target, p.capability.GetSupportedCategory(), p.capability.GetSupportedType()))
 }
