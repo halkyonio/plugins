@@ -77,7 +77,7 @@ type BuildResponse struct {
 type PluginResource interface {
 	GetSupportedCategory() halkyon.CapabilityCategory
 	GetSupportedType() halkyon.CapabilityType
-	GetDependentResourcesWith(owner v1beta1.HalkyonResource) map[schema.GroupVersionKind]framework.DependentResource
+	GetDependentResourcesWith(owner v1beta1.HalkyonResource) []framework.DependentResource
 }
 
 type TypeRegistry map[halkyon.CapabilityType]bool
