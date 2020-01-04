@@ -13,7 +13,7 @@ import (
 type PluginServer interface {
 	Build(req PluginRequest, res *BuildResponse) error
 	GetCategory(req PluginRequest, res *halkyon.CapabilityCategory) error
-	GetWatchedResourcesTypes(req PluginRequest, res *[]schema.GroupVersionKind) error
+	GetDependentResourceTypes(req PluginRequest, res *[]schema.GroupVersionKind) error
 	GetType(req PluginRequest, res *halkyon.CapabilityType) error
 	IsReady(req PluginRequest, res *IsReadyResponse) error
 	Name(req PluginRequest, res *string) error
@@ -53,13 +53,11 @@ func (p PluginServerImpl) GetCategory(_ PluginRequest, res *halkyon.CapabilityCa
 	return nil
 }
 
-func (p PluginServerImpl) GetWatchedResourcesTypes(req PluginRequest, res *[]schema.GroupVersionKind) error {
+func (p PluginServerImpl) GetDependentResourceTypes(req PluginRequest, res *[]schema.GroupVersionKind) error {
 	dependents := p.capability.GetDependentResourcesWith(req.Owner)
 	*res = make([]schema.GroupVersionKind, 0, len(dependents))
-	for kind, resource := range dependents {
-		if resource.GetConfig().Watched {
-			*res = append(*res, kind)
-		}
+	for kind := range dependents {
+		*res = append(*res, kind)
 	}
 	return nil
 }
