@@ -12,6 +12,7 @@ import (
 )
 
 type Plugin interface {
+	Name() string
 	GetCategory() halkyon.CapabilityCategory
 	GetType() halkyon.CapabilityType
 	ReadyFor(owner *halkyon.Capability) []framework.DependentResource
