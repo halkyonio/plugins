@@ -37,6 +37,10 @@ type killableClient interface {
 	recordGoPluginClient(client *plugin.Client)
 }
 
+func (p *PluginClient) Name() string {
+	return p.name
+}
+
 func (p *PluginClient) recordGoPluginClient(client *plugin.Client) {
 	p.gpClient = client
 }
