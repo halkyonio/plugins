@@ -359,6 +359,8 @@ halkyon.io/api v1.0.0-beta.8 h1:YiD2rPWWCSwi/exus5i2LC2N2LswF2kjgpYWtfXeL30=
 halkyon.io/api v1.0.0-beta.8/go.mod h1:bCOZh54+rJ4SQad0L0OMO0B+Jf7J3OtKp7SPmdLowGE=
 halkyon.io/api v1.0.0-beta.8.0.20191219201020-14dfa325eab8 h1:nTLIzu3qIBgvVssg5LH4L+hETOhyQ0zz6JdBRNs2Khg=
 halkyon.io/api v1.0.0-beta.8.0.20191219201020-14dfa325eab8/go.mod h1:bCOZh54+rJ4SQad0L0OMO0B+Jf7J3OtKp7SPmdLowGE=
+halkyon.io/api v1.0.0-beta.8.0.20200107175629-6ff499303202 h1:jZyhKfLfCUb9mSxSIOrN5VN6ooL03szagt3zWduY5R0=
+halkyon.io/api v1.0.0-beta.8.0.20200107175629-6ff499303202/go.mod h1:bCOZh54+rJ4SQad0L0OMO0B+Jf7J3OtKp7SPmdLowGE=
 halkyon.io/operator-framework v0.0.0-20191212091852-c4cae77ce280 h1:bi8XSewv8dNvr6FSgQ8lg2nADfQ4GqYnc9EKD8jg9Wc=
 halkyon.io/operator-framework v0.0.0-20191212091852-c4cae77ce280/go.mod h1:teivWH+XwhRXzmbzqx7LWAfBH9f23FYo9RMHRDbJN3A=
 halkyon.io/operator-framework v0.0.0-20191218162228-8520e4863185 h1:QJEFHg8V/VLn44xX2JrLtJ0SfKOkjGbyjrgvWkAeX/Q=
@@ -383,6 +385,7 @@ k8s.io/code-generator v0.0.0-20181117043124-c2090bec4d9b/go.mod h1:MYiN+ZJZ9HkET
 k8s.io/code-generator v0.0.0-20190612205613-18da4a14b22b/go.mod h1:G8bQwmHm2eafm5bgtX67XDZQ8CWKSGu9DekI+yN4Y5I=
 k8s.io/code-generator v0.0.0-20191107025440-35a828233ddd h1:t3VKQDFV5yiqx37X7TqjzlSN2YWipwhBOKmnFu/Wc9A=
 k8s.io/code-generator v0.0.0-20191107025440-35a828233ddd/go.mod h1:GWj84JAH5M9huodTus4PpRnC33JiW9lEAWF6FZvF2eU=
+k8s.io/code-generator v0.17.0 h1:y+KWtDWNqlJzJu/kUy8goJZO0X71PGIpAHLX8a0JYk0=
 k8s.io/code-generator v0.17.0/go.mod h1:DVmfPQgxQENqDIzVR2ddLXMH34qeszkKSdH/N+s+38s=
 k8s.io/component-base v0.0.0-20190918200425-ed2f0867c778/go.mod h1:DFWQCXgXVLiWtzFaS17KxHdlUeUymP7FLxZSkmL9/jU=
 k8s.io/gengo v0.0.0-20190116091435-f8a0810f38af/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
@@ -391,6 +394,7 @@ k8s.io/gengo v0.0.0-20190822140433-26a664648505 h1:ZY6yclUKVbZ+SdWnkfY+Je5vrMpKO
 k8s.io/gengo v0.0.0-20190822140433-26a664648505/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
 k8s.io/gengo v0.0.0-20191108084044-e500ee069b5c h1:iraFntD6FA5K/hBaPW2z/ZItJZEG63uc3ak5S0oDVEo=
 k8s.io/gengo v0.0.0-20191108084044-e500ee069b5c/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
+k8s.io/gengo v0.0.0-20191120174120-e74f70b9b27e h1:HqlU9dKk5YVs7R84jmq6U3Wo/XslpkxHpBv2iWHLtLc=
 k8s.io/gengo v0.0.0-20191120174120-e74f70b9b27e/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
 k8s.io/klog v0.0.0-20181102134211-b9b56d5dfc92/go.mod h1:Gq+BEi5rUBO/HRz0bTSXDUcqjScdoY3a9IHpCEIOOfk=
 k8s.io/klog v0.3.0/go.mod h1:Gq+BEi5rUBO/HRz0bTSXDUcqjScdoY3a9IHpCEIOOfk=
