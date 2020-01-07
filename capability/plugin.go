@@ -1,6 +1,7 @@
 package capability
 
 import (
+	"fmt"
 	"github.com/hashicorp/go-plugin"
 	halkyon "halkyon.io/api/capability/v1beta1"
 	"halkyon.io/api/v1beta1"
@@ -81,11 +82,37 @@ type PluginResource interface {
 	GetDependentResourcesWith(owner v1beta1.HalkyonResource) []framework.DependentResource
 }
 
-type TypeRegistry map[halkyon.CapabilityType]bool
-type CategoryRegistry map[halkyon.CapabilityCategory]TypeRegistry
+type typeRegistry map[halkyon.CapabilityType]Plugin
+type pluginsRegistry map[halkyon.CapabilityCategory]typeRegistry
 
-var SupportedCategories CategoryRegistry
-var Plugins []Plugin
+var plugins pluginsRegistry
+
+func GetPluginFor(category halkyon.CapabilityCategory, capabilityType halkyon.CapabilityType) (Plugin, error) {
+	if types, ok := plugins[category]; ok {
+		if p, ok := types[capabilityType]; ok {
+			return p, nil
+		}
+	}
+	return nil, fmt.Errorf("couldn't find a plugin to handle capability with category '%s' and type '%s'", category, capabilityType)
+}
+
+func register(p Plugin) {
+	category := p.GetCategory()
+	if len(plugins) == 0 {
+		plugins = make(pluginsRegistry, 7)
+	}
+	types, ok := plugins[category]
+	if !ok {
+		types = make(typeRegistry, 7)
+		plugins[category] = types
+	}
+	capabilityType := p.GetType()
+	plug, ok := types[capabilityType]
+	if ok {
+		panic(fmt.Errorf("a plugin named '%s' is already registered for category '%s' / type '%s' pair", plug.Name(), category, capabilityType))
+	}
+	types[capabilityType] = p
+}
 
 var Handshake = plugin.HandshakeConfig{
 	ProtocolVersion:  1,

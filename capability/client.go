@@ -173,6 +173,9 @@ func NewPlugin(path string) (Plugin, error) {
 	}
 	p := raw.(killableClient)
 	p.recordGoPluginClient(client)
+
+	register(p)
+
 	return p, nil
 }
 
