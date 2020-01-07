@@ -107,9 +107,9 @@ func (p PluginDependentResource) NameFrom(underlying runtime.Object) string {
 	return res
 }
 
-func (p PluginDependentResource) Fetch(helper *framework.K8SHelper) (runtime.Object, error) {
+func (p PluginDependentResource) Fetch() (runtime.Object, error) {
 	into := framework.CreateEmptyUnstructured(p.GetConfig().GroupVersionKind)
-	if err := helper.Client.Get(context.TODO(), types.NamespacedName{Name: p.Name(), Namespace: p.owner.GetNamespace()}, into); err != nil {
+	if err := framework.Helper.Client.Get(context.TODO(), types.NamespacedName{Name: p.Name(), Namespace: p.owner.GetNamespace()}, into); err != nil {
 		return nil, err
 	}
 	return into, nil
