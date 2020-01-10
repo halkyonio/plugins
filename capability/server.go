@@ -14,7 +14,7 @@ type PluginServer interface {
 	Build(req PluginRequest, res *BuildResponse) error
 	GetCategory(req PluginRequest, res *halkyon.CapabilityCategory) error
 	GetDependentResourceTypes(req PluginRequest, res *[]schema.GroupVersionKind) error
-	GetType(req PluginRequest, res *halkyon.CapabilityType) error
+	GetTypes(req PluginRequest, res *[]halkyon.CapabilityType) error
 	IsReady(req PluginRequest, res *IsReadyResponse) error
 	Name(req PluginRequest, res *string) error
 	NameFrom(req PluginRequest, res *string) error
@@ -62,8 +62,8 @@ func (p PluginServerImpl) GetDependentResourceTypes(req PluginRequest, res *[]sc
 	return nil
 }
 
-func (p PluginServerImpl) GetType(_ PluginRequest, res *halkyon.CapabilityType) error {
-	*res = p.capability.GetSupportedType()
+func (p PluginServerImpl) GetTypes(req PluginRequest, res *[]halkyon.CapabilityType) error {
+	*res = p.capability.GetSupportedTypes()
 	return nil
 }
 
@@ -107,7 +107,7 @@ func (p PluginServerImpl) dependentResourceFor(req PluginRequest) framework.Depe
 			return dependent
 		}
 	}
-	panic(fmt.Errorf("no dependent of type %v for plugin %v/%v", req.Target, p.capability.GetSupportedCategory(), p.capability.GetSupportedType()))
+	panic(fmt.Errorf("no dependent of type %v for plugin %v/%v", req.Target, p.capability.GetSupportedCategory(), p.capability.GetSupportedTypes()))
 }
 
 func requestedArg(dependent framework.DependentResource, req PluginRequest) runtime.Object {

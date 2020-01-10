@@ -24,7 +24,7 @@ type PluginClient struct {
 	owner       *halkyon.Capability
 	gpClient    *plugin.Client
 	capCategory *halkyon.CapabilityCategory
-	capType     *halkyon.CapabilityType
+	capType     *[]halkyon.CapabilityType
 	log         logr.Logger
 }
 
@@ -55,10 +55,10 @@ func (p *PluginClient) GetCategory() halkyon.CapabilityCategory {
 	return *p.capCategory
 }
 
-func (p *PluginClient) GetType() halkyon.CapabilityType {
+func (p *PluginClient) GetTypes() []halkyon.CapabilityType {
 	if p.capType == nil {
-		var res halkyon.CapabilityType
-		p.call("GetType", emptyGVK, &res)
+		res := []halkyon.CapabilityType{}
+		p.call("GetTypes", emptyGVK, &res)
 		p.capType = &res
 	}
 	return *p.capType
