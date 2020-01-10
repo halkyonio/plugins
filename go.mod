@@ -6,7 +6,7 @@ require (
 	github.com/go-logr/logr v0.1.0
 	github.com/hashicorp/go-plugin v1.0.2-0.20191004171845-809113480b55
 	halkyon.io/api v1.0.0-rc.1
-	halkyon.io/operator-framework v1.0.0-beta.1.0.20200109155817-ef5be3bee3a7
+	halkyon.io/operator-framework v1.0.0-beta.2
 	k8s.io/apimachinery v0.17.0
 	k8s.io/utils v0.0.0-20190712204705-3dccf664f023 // indirect
 )
