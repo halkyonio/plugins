@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"log"
 	"net/rpc"
 	"os"
 	"os/exec"
@@ -184,9 +183,8 @@ func NewPlugin(path string, log logr.Logger) (Plugin, error) {
 }
 
 func (p *PluginClient) call(method string, targetDependentType schema.GroupVersionKind, result interface{}, underlying ...runtime.Object) {
-	p.log.Info(fmt.Sprintf("called %s on %s for %v", method, p.name, targetDependentType))
 	if len(underlying) > 1 {
-		log.Fatalf("error calling %s on %s plugin: call only accepts one extra argument, was given %v", method, p.name, underlying)
+		p.log.Error(fmt.Errorf("error calling %s on %s plugin", method, p.name), fmt.Sprintf("call only accepts one extra argument, was given %v", underlying))
 	}
 	request := PluginRequest{}
 	if p.owner != nil {
@@ -200,7 +198,7 @@ func (p *PluginClient) call(method string, targetDependentType schema.GroupVersi
 	}
 	err := p.client.Call("Plugin."+method, request, result)
 	if err != nil {
-		log.Fatalf("error calling %s on %s plugin: %v", method, p.name, err)
+		p.log.Error(err, fmt.Sprintf("error calling %s on %s plugin", method, p.name))
 	}
 }
 
