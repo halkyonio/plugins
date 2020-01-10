@@ -3,6 +3,7 @@ package capability
 import (
 	"encoding/gob"
 	"fmt"
+	"github.com/prometheus/common/log"
 	halkyon "halkyon.io/api/capability/v1beta1"
 	framework "halkyon.io/operator-framework"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -49,6 +50,7 @@ func (p PluginServerImpl) Build(req PluginRequest, res *BuildResponse) error {
 }
 
 func (p PluginServerImpl) GetCategory(_ PluginRequest, res *halkyon.CapabilityCategory) error {
+	log.Info("server: GetCategory")
 	*res = p.capability.GetSupportedCategory()
 	return nil
 }
@@ -63,6 +65,7 @@ func (p PluginServerImpl) GetDependentResourceTypes(req PluginRequest, res *[]sc
 }
 
 func (p PluginServerImpl) GetType(_ PluginRequest, res *halkyon.CapabilityType) error {
+	log.Info("server: GetCategory")
 	*res = p.capability.GetSupportedType()
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/gob"
 	"fmt"
+	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-plugin"
 	halkyon "halkyon.io/api/capability/v1beta1"
 	"halkyon.io/api/v1beta1"
@@ -25,6 +26,7 @@ type PluginClient struct {
 	gpClient    *plugin.Client
 	capCategory *halkyon.CapabilityCategory
 	capType     *halkyon.CapabilityType
+	log         logr.Logger
 }
 
 var _ Plugin = &PluginClient{}
@@ -71,6 +73,7 @@ func (p *PluginClient) ReadyFor(owner *halkyon.Capability) []framework.Dependent
 	client := &PluginClient{
 		client: p.client,
 		name:   p.name,
+		log:    p.log,
 		owner:  owner,
 	}
 	resourcesTypes := []schema.GroupVersionKind{}
@@ -148,7 +151,7 @@ func (p *PluginDependentResource) GetConfig() framework.DependentResourceConfig 
 	return *p.config
 }
 
-func NewPlugin(path string) (Plugin, error) {
+func NewPlugin(path string, log logr.Logger) (Plugin, error) {
 	name := filepath.Base(path)
 
 	// We're a host. Start by launching the plugin process.
@@ -171,7 +174,8 @@ func NewPlugin(path string) (Plugin, error) {
 		fmt.Println("Error:", err.Error())
 		os.Exit(1)
 	}
-	p := raw.(killableClient)
+	p := raw.(*PluginClient)
+	p.log = log
 	p.recordGoPluginClient(client)
 
 	register(p)
@@ -180,6 +184,7 @@ func NewPlugin(path string) (Plugin, error) {
 }
 
 func (p *PluginClient) call(method string, targetDependentType schema.GroupVersionKind, result interface{}, underlying ...runtime.Object) {
+	p.log.Info(fmt.Sprintf("called %s on %s for %v", method, p.name, targetDependentType))
 	if len(underlying) > 1 {
 		log.Fatalf("error calling %s on %s plugin: call only accepts one extra argument, was given %v", method, p.name, underlying)
 	}

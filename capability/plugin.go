@@ -96,7 +96,7 @@ func GetPluginFor(category halkyon.CapabilityCategory, capabilityType halkyon.Ca
 	return nil, fmt.Errorf("couldn't find a plugin to handle capability with category '%s' and type '%s'", category, capabilityType)
 }
 
-func register(p Plugin) {
+func register(p *PluginClient) {
 	category := p.GetCategory()
 	if len(plugins) == 0 {
 		plugins = make(pluginsRegistry, 7)
@@ -112,6 +112,7 @@ func register(p Plugin) {
 		panic(fmt.Errorf("a plugin named '%s' is already registered for category '%s' / type '%s' pair", plug.Name(), category, capabilityType))
 	}
 	types[capabilityType] = p
+	p.log.Info(fmt.Sprintf("Registered plugin named '%s' for category '%s' / type '%s' pair", p.name, category, capabilityType))
 }
 
 var Handshake = plugin.HandshakeConfig{
