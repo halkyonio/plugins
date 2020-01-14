@@ -39,9 +39,9 @@ func register(p *PluginClient) {
 		types = make(typeRegistry, 7)
 		plugins[categoryKey] = types
 	}
-	capabilityTypes := p.GetTypes()
-	for _, capabilityType := range capabilityTypes {
-		t := capabilityType.Type
+	typeInfos := p.GetTypes()
+	for _, typeInfo := range typeInfos {
+		t := typeInfo.Type
 		typeKey := typeKey(t)
 		plug, ok := types[typeKey]
 		if ok {
