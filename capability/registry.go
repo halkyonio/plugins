@@ -2,7 +2,11 @@ package capability
 
 import (
 	"fmt"
+	"halkyon.io/api/capability-info/clientset/versioned"
+	"halkyon.io/api/capability-info/v1beta1"
 	halkyon "halkyon.io/api/capability/v1beta1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	controllerruntime "sigs.k8s.io/controller-runtime"
 	"strings"
 )
 
@@ -10,6 +14,7 @@ type typeRegistry map[halkyon.CapabilityType]Plugin
 type pluginsRegistry map[halkyon.CapabilityCategory]typeRegistry
 
 var plugins pluginsRegistry
+var capInfoClient = versioned.NewForConfigOrDie(controllerruntime.GetConfigOrDie()).HalkyonV1beta1().CapabilityInfos()
 
 func GetPluginFor(category halkyon.CapabilityCategory, capabilityType halkyon.CapabilityType) (Plugin, error) {
 	if types, ok := plugins[categoryKey(category)]; ok {
@@ -49,5 +54,18 @@ func register(p *PluginClient) {
 		}
 		types[typeKey] = p
 		p.log.Info(fmt.Sprintf("Registered plugin named '%s' for category '%s' / type '%s' pair", p.name, category, t))
+
+		// create associated CapabilityInfo
+		capInfo := &v1beta1.CapabilityInfo{
+			ObjectMeta: v1.ObjectMeta{Name: fmt.Sprintf("%v/%v", category, t)},
+			Spec: v1beta1.CapabilityInfoSpec{
+				Versions: typeInfo.Versions,
+				Category: category.String(),
+				Type:     t.String(),
+			},
+		}
+		if _, err := capInfoClient.Create(capInfo); err != nil {
+			panic(err)
+		}
 	}
 }
