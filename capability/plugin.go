@@ -4,7 +4,6 @@ import (
 	"github.com/hashicorp/go-plugin"
 	halkyon "halkyon.io/api/capability/v1beta1"
 	framework "halkyon.io/operator-framework"
-	"k8s.io/apimachinery/pkg/runtime"
 	"net/rpc"
 )
 
@@ -29,21 +28,6 @@ func (p *GoPluginPlugin) Server(b *plugin.MuxBroker) (interface{}, error) {
 
 func (p *GoPluginPlugin) Client(b *plugin.MuxBroker, client *rpc.Client) (interface{}, error) {
 	return &PluginClient{name: p.name, client: client}, nil
-}
-
-type IsReadyResponse struct {
-	Ready   bool
-	Message string
-}
-
-type UpdateResponse struct {
-	NeedsUpdate bool
-	Error       error
-	Updated     runtime.Object
-}
-
-type BuildResponse struct {
-	Built runtime.Object
 }
 
 var Handshake = plugin.HandshakeConfig{
