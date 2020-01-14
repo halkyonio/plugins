@@ -10,6 +10,7 @@ import (
 type PluginResource interface {
 	GetSupportedCategory() halkyon.CapabilityCategory
 	GetSupportedTypes() []halkyon.CapabilityType
+	GetVersionsFor(capabilityType halkyon.CapabilityType) []string
 	GetDependentResourcesWith(owner v1beta1.HalkyonResource) []framework.DependentResource
 }
 
@@ -68,4 +69,12 @@ func (a AggregatePluginResource) GetSupportedTypes() []halkyon.CapabilityType {
 func (a AggregatePluginResource) GetDependentResourcesWith(owner v1beta1.HalkyonResource) []framework.DependentResource {
 	capType := typeKey(owner.(*halkyon.Capability).Spec.Type)
 	return a.pluginResources[capType].GetDependentResourcesWith(owner)
+}
+
+func (a AggregatePluginResource) GetVersionsFor(capabilityType halkyon.CapabilityType) []string {
+	capType := typeKey(capabilityType)
+	if resource, ok := a.pluginResources[capType]; ok {
+		return resource.GetVersionsFor(capType)
+	}
+	return []string{}
 }
