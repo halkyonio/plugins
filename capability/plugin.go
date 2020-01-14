@@ -2,18 +2,8 @@ package capability
 
 import (
 	"github.com/hashicorp/go-plugin"
-	halkyon "halkyon.io/api/capability/v1beta1"
-	framework "halkyon.io/operator-framework"
 	"net/rpc"
 )
-
-type Plugin interface {
-	Name() string
-	GetCategory() halkyon.CapabilityCategory
-	GetTypes() []halkyon.CapabilityType
-	ReadyFor(owner *halkyon.Capability) []framework.DependentResource
-	Kill()
-}
 
 var _ plugin.Plugin = &GoPluginPlugin{}
 

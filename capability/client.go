@@ -18,6 +18,14 @@ import (
 	"path/filepath"
 )
 
+type Plugin interface {
+	Name() string
+	GetCategory() halkyon.CapabilityCategory
+	GetTypes() []halkyon.CapabilityType
+	ReadyFor(owner *halkyon.Capability) []framework.DependentResource
+	Kill()
+}
+
 type PluginClient struct {
 	client      *rpc.Client
 	name        string
