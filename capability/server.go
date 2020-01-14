@@ -14,7 +14,7 @@ type PluginServer interface {
 	Build(req PluginRequest, res *BuildResponse) error
 	GetCategory(req PluginRequest, res *halkyon.CapabilityCategory) error
 	GetDependentResourceTypes(req PluginRequest, res *[]schema.GroupVersionKind) error
-	GetTypes(req PluginRequest, res *[]halkyon.CapabilityType) error
+	GetTypes(req PluginRequest, res *[]TypeInfo) error
 	IsReady(req PluginRequest, res *IsReadyResponse) error
 	Name(req PluginRequest, res *string) error
 	NameFrom(req PluginRequest, res *string) error
@@ -62,7 +62,7 @@ func (p PluginServerImpl) GetDependentResourceTypes(req PluginRequest, res *[]sc
 	return nil
 }
 
-func (p PluginServerImpl) GetTypes(req PluginRequest, res *[]halkyon.CapabilityType) error {
+func (p PluginServerImpl) GetTypes(req PluginRequest, res *[]TypeInfo) error {
 	*res = p.capability.GetSupportedTypes()
 	return nil
 }

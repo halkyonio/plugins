@@ -9,24 +9,23 @@ import (
 
 type PluginResource interface {
 	GetSupportedCategory() halkyon.CapabilityCategory
-	GetSupportedTypes() []halkyon.CapabilityType
-	GetVersionsFor(capabilityType halkyon.CapabilityType) []string
+	GetSupportedTypes() []TypeInfo
 	GetDependentResourcesWith(owner v1beta1.HalkyonResource) []framework.DependentResource
 }
 
 type SimplePluginResourceStem struct {
-	ct []halkyon.CapabilityType
+	ct []TypeInfo
 	cc halkyon.CapabilityCategory
 }
 
-func NewSimplePluginResourceStem(cat halkyon.CapabilityCategory, typ halkyon.CapabilityType) SimplePluginResourceStem {
-	return SimplePluginResourceStem{cc: cat, ct: []halkyon.CapabilityType{typ}}
+func NewSimplePluginResourceStem(cat halkyon.CapabilityCategory, typ TypeInfo) SimplePluginResourceStem {
+	return SimplePluginResourceStem{cc: cat, ct: []TypeInfo{typ}}
 }
 func (p SimplePluginResourceStem) GetSupportedCategory() halkyon.CapabilityCategory {
 	return p.cc
 }
 
-func (p SimplePluginResourceStem) GetSupportedTypes() []halkyon.CapabilityType {
+func (p SimplePluginResourceStem) GetSupportedTypes() []TypeInfo {
 	return p.ct
 }
 
@@ -47,8 +46,8 @@ func NewAggregatePluginResource(resources ...PluginResource) (PluginResource, er
 		if !apr.category.Equals(category) {
 			return nil, fmt.Errorf("can only aggregate PluginResources providing the same category, got %v and %v", apr.category, category)
 		}
-		for _, capabilityType := range resource.GetSupportedTypes() {
-			apr.pluginResources[typeKey(capabilityType)] = resource
+		for _, typeInfo := range resource.GetSupportedTypes() {
+			apr.pluginResources[typeKey(typeInfo.Type)] = resource
 		}
 	}
 	return apr, nil
@@ -58,10 +57,10 @@ func (a AggregatePluginResource) GetSupportedCategory() halkyon.CapabilityCatego
 	return a.category
 }
 
-func (a AggregatePluginResource) GetSupportedTypes() []halkyon.CapabilityType {
-	types := make([]halkyon.CapabilityType, 0, len(a.pluginResources))
-	for capabilityType := range a.pluginResources {
-		types = append(types, capabilityType)
+func (a AggregatePluginResource) GetSupportedTypes() []TypeInfo {
+	types := make([]TypeInfo, 0, len(a.pluginResources))
+	for _, resource := range a.pluginResources {
+		types = append(types, resource.GetSupportedTypes()...)
 	}
 	return types
 }
@@ -69,12 +68,4 @@ func (a AggregatePluginResource) GetSupportedTypes() []halkyon.CapabilityType {
 func (a AggregatePluginResource) GetDependentResourcesWith(owner v1beta1.HalkyonResource) []framework.DependentResource {
 	capType := typeKey(owner.(*halkyon.Capability).Spec.Type)
 	return a.pluginResources[capType].GetDependentResourcesWith(owner)
-}
-
-func (a AggregatePluginResource) GetVersionsFor(capabilityType halkyon.CapabilityType) []string {
-	capType := typeKey(capabilityType)
-	if resource, ok := a.pluginResources[capType]; ok {
-		return resource.GetVersionsFor(capType)
-	}
-	return []string{}
 }

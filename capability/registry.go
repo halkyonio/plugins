@@ -41,12 +41,13 @@ func register(p *PluginClient) {
 	}
 	capabilityTypes := p.GetTypes()
 	for _, capabilityType := range capabilityTypes {
-		typeKey := typeKey(capabilityType)
+		t := capabilityType.Type
+		typeKey := typeKey(t)
 		plug, ok := types[typeKey]
 		if ok {
-			panic(fmt.Errorf("a plugin named '%s' is already registered for category '%s' / type '%s' pair", plug.Name(), category, capabilityType))
+			panic(fmt.Errorf("a plugin named '%s' is already registered for category '%s' / type '%s' pair", plug.Name(), category, t))
 		}
 		types[typeKey] = p
-		p.log.Info(fmt.Sprintf("Registered plugin named '%s' for category '%s' / type '%s' pair", p.name, category, capabilityType))
+		p.log.Info(fmt.Sprintf("Registered plugin named '%s' for category '%s' / type '%s' pair", p.name, category, t))
 	}
 }

@@ -1,17 +1,14 @@
 package capability
 
 import (
-	"context"
 	"encoding/gob"
 	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-plugin"
 	halkyon "halkyon.io/api/capability/v1beta1"
-	"halkyon.io/api/v1beta1"
 	framework "halkyon.io/operator-framework"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"net/rpc"
 	"os"
 	"os/exec"
@@ -21,9 +18,14 @@ import (
 type Plugin interface {
 	Name() string
 	GetCategory() halkyon.CapabilityCategory
-	GetTypes() []halkyon.CapabilityType
+	GetTypes() []TypeInfo
 	ReadyFor(owner *halkyon.Capability) []framework.DependentResource
 	Kill()
+}
+
+type TypeInfo struct {
+	Type     halkyon.CapabilityType
+	Versions []string
 }
 
 type PluginClient struct {
@@ -32,7 +34,7 @@ type PluginClient struct {
 	owner       *halkyon.Capability
 	gpClient    *plugin.Client
 	capCategory *halkyon.CapabilityCategory
-	capTypes    *[]halkyon.CapabilityType
+	capTypes    *[]TypeInfo
 	log         logr.Logger
 }
 
@@ -63,9 +65,9 @@ func (p *PluginClient) GetCategory() halkyon.CapabilityCategory {
 	return *p.capCategory
 }
 
-func (p *PluginClient) GetTypes() []halkyon.CapabilityType {
+func (p *PluginClient) GetTypes() []TypeInfo {
 	if p.capTypes == nil {
-		res := []halkyon.CapabilityType{}
+		res := []TypeInfo{}
 		p.call("GetTypes", emptyGVK, &res)
 		p.capTypes = &res
 	}
