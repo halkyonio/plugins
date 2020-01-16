@@ -57,7 +57,7 @@ func register(p *PluginClient) {
 
 		// create associated CapabilityInfo
 		capInfo := &v1beta1.CapabilityInfo{
-			ObjectMeta: v1.ObjectMeta{Name: fmt.Sprintf("%v/%v", category, t)},
+			ObjectMeta: v1.ObjectMeta{Name: fmt.Sprintf("%v-%v", category, t)},
 			Spec: v1beta1.CapabilityInfoSpec{
 				Versions: typeInfo.Versions,
 				Category: category.String(),
