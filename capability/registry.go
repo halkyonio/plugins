@@ -5,6 +5,7 @@ import (
 	"halkyon.io/api/capability-info/clientset/versioned"
 	"halkyon.io/api/capability-info/v1beta1"
 	halkyon "halkyon.io/api/capability/v1beta1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"strings"
@@ -50,22 +51,41 @@ func register(p *PluginClient) {
 		typeKey := typeKey(t)
 		plug, ok := types[typeKey]
 		if ok {
-			panic(fmt.Errorf("a plugin named '%s' is already registered for category '%s' / type '%s' pair", plug.Name(), category, t))
+			p.log.Error(fmt.Errorf("a plugin named '%s' is already registered for '%s'/'%s' category/type pair", plug.Name(), category, t),
+				fmt.Sprintf("'%s' plugin will not be registered to provide capability '%s'/'%s'", p.Name(), category, t))
+			return
 		}
-		types[typeKey] = p
-		p.log.Info(fmt.Sprintf("Registered plugin named '%s' for category '%s' / type '%s' pair", p.name, category, t))
 
-		// create associated CapabilityInfo
+		// create or update associated CapabilityInfo
+		capabilityName := fmt.Sprintf("%v-%v", categoryKey, typeKey)
 		capInfo := &v1beta1.CapabilityInfo{
-			ObjectMeta: v1.ObjectMeta{Name: fmt.Sprintf("%v-%v", categoryKey, typeKey)},
+			ObjectMeta: v1.ObjectMeta{Name: capabilityName},
 			Spec: v1beta1.CapabilityInfoSpec{
-				Versions: typeInfo.Versions,
+				Versions: v1beta1.VersionsAsString(typeInfo.Versions...),
 				Category: category.String(),
 				Type:     t.String(),
 			},
 		}
-		if _, err := capInfoClient.Create(capInfo); err != nil {
-			panic(err)
+
+		// check if the capability info already exist
+		ci, err := capInfoClient.Get(capabilityName, v1.GetOptions{})
+		// if not create it
+		if errors.IsNotFound(err) {
+			_, err = capInfoClient.Create(capInfo)
 		}
+		// if it exists, update it with potentially new information
+		if err == nil {
+			capInfo.ResourceVersion = ci.ResourceVersion
+			_, err = capInfoClient.Update(capInfo)
+		}
+		// if an error occurred at any time, log it and ignore the
+		if err != nil {
+			p.log.Error(err, fmt.Sprintf("couldn't create or update capabilityinfo named '%s', associated capability will be ignored", capabilityName))
+			return
+		}
+
+		// if everything went well, register plugin
+		types[typeKey] = p
+		p.log.Info(fmt.Sprintf("Registered plugin named '%s' for category '%s' / type '%s' pair", p.name, category, t))
 	}
 }
