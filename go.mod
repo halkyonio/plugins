@@ -9,6 +9,7 @@ require (
 	halkyon.io/operator-framework v1.0.0-beta.2
 	k8s.io/apimachinery v0.17.0
 	k8s.io/utils v0.0.0-20190712204705-3dccf664f023 // indirect
+	sigs.k8s.io/controller-runtime v0.3.0
 )
 
 replace k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190404173353-6a84e37a896d // kubernetes-1.14.5
