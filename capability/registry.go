@@ -69,15 +69,17 @@ func register(p *PluginClient) {
 
 		// check if the capability info already exist
 		ci, err := capInfoClient.Get(capabilityName, v1.GetOptions{})
-		// if not create it
-		if errors.IsNotFound(err) {
-			_, err = capInfoClient.Create(capInfo)
-		}
-		// if it exists, update it with potentially new information
 		if err == nil {
+			// if it exists, update it with potentially new information
 			capInfo.ResourceVersion = ci.ResourceVersion
 			_, err = capInfoClient.Update(capInfo)
+		} else {
+			// if not create it
+			if errors.IsNotFound(err) {
+				_, err = capInfoClient.Create(capInfo)
+			}
 		}
+
 		// if an error occurred at any time, log it and ignore the
 		if err != nil {
 			p.log.Error(err, fmt.Sprintf("couldn't create or update capabilityinfo named '%s', associated capability will be ignored", capabilityName))
