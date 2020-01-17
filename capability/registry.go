@@ -53,7 +53,7 @@ func register(p *PluginClient) {
 		if ok {
 			p.log.Error(fmt.Errorf("a plugin named '%s' is already registered for '%s'/'%s' category/type pair", plug.Name(), category, t),
 				fmt.Sprintf("'%s' plugin will not be registered to provide capability '%s'/'%s'", p.Name(), category, t))
-			return
+			continue
 		}
 
 		// create or update associated CapabilityInfo
@@ -81,7 +81,7 @@ func register(p *PluginClient) {
 		// if an error occurred at any time, log it and ignore the
 		if err != nil {
 			p.log.Error(err, fmt.Sprintf("couldn't create or update capabilityinfo named '%s', associated capability will be ignored", capabilityName))
-			return
+			continue
 		}
 
 		// if everything went well, register plugin
