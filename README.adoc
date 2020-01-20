@@ -1,0 +1,74 @@
+= Halkyon capability plugins architecture
+
+Part of what makes https://github.com/halkyonio/operator[Halkyon] interesting is the capability system. While the capability
+concept is powerful, it only makes sense if capabilities can be added to Halkyon without requiring to modify its core. The
+goal of this plugin architecture is to make it as easy as possible to extend Halkyon by adding new capabilities as plugins. This
+has also the added advantage of being able to decouple the lifecycles of the operator and that of its plugins, which can evolve
+separately (as long as API compatibility is maintained, of course).
+
+== Architecture overview
+
+The plugin architecture relies at its core on https://github.com/hashicorp/go-plugin[Hashicorp's go-plugin]. This, in turns,
+means that Halkyon plugins run as separate processes of the operator, relying on RPC communication with the core. A plugin,
+therefore, consists in two parts: a client that runs in the operator process, controlling the lifecycle of and interacting with
+the second part of the plugin, a server running in a separate process, implementing the plugin behavior. However, from a user's
+point of view, much, if not all, of that complexity is hidden. We also made a point to hide that complexity for plugins
+implementors so that it is as easy as possible to create new plugins, without having to worry about the RPC infrastructure.
+While the use of RPC makes it technically possible to write plugins using different programming languages, we focused our
+efforts (and will only document) the use case of a Go-based plugin. Each plugin is compiled into a binary and needs to follow
+some conventions in order to be automatically discoverable and downloadable by the operator.
+
+=== Client
+
+The operator is only marginally aware of plugins: it loads them from a local `plugins` directory which can be (and is, in most
+instances) seeded by passing a list of comma-separated plugin references, which are downloaded and cached locally. Each binary
+found in the `plugins` directory by the operator is then assumed to be a capability plugin which path is passed to the
+`NewPlugin` function. This function sets the RPC plumbing, in particular, starts the plugin process, opens a client to it and
+registers the metadata of the plugin so that the operator can know which capabilities it provides. All this is executed when the
+operator starts in its `main` function. From there, the operator is only aware of the plugin when it attempts to create a 
+capability: based on its category and type combination, the operator will look for a plugin providing support for such a pair to
+initialize the dependents of the capability object. If a plugin is found, the operator proceeds transparently interacting with 
+the plugin via the capability object. If no plugin is found to support the category and type of the desired capability, the 
+capability is set in error until a plugin can be provided (at this time, after an operator restart) to support it.
+
+Here is the `Plugin` interface that the operator interacts with, though technically, it only ever calls `GetTypes`
+and `ReadyFor` directly:
+
+[source,go]
+----
+type Plugin interface {
+	Name() string
+	GetCategory() halkyon.CapabilityCategory
+	GetTypes() []TypeInfo
+	ReadyFor(owner *halkyon.Capability) []framework.DependentResource
+	Kill()
+}
+----
+
+
+=== Server
+
+TODO
+
+=== Plugin implementation
+
+TODO
+
+[source,go]
+----
+type PluginResource interface {
+	GetSupportedCategory() halkyon.CapabilityCategory
+	GetSupportedTypes() []TypeInfo
+	GetDependentResourcesWith(owner v1beta1.HalkyonResource) []framework.DependentResource
+}
+----
+
+=== Example
+
+TODO
+
+== Operator configuration
+
+TODO
+
+`HALKYON_PLUGINS: halkyonio/kubedb-capability@v1.0.0-beta.8`
