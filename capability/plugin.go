@@ -13,7 +13,7 @@ type GoPluginPlugin struct {
 }
 
 func (p *GoPluginPlugin) Server(b *plugin.MuxBroker) (interface{}, error) {
-	return NewPluginServer(p.Delegate), nil
+	return &PluginServerImpl{capability: p.Delegate}, nil
 }
 
 func (p *GoPluginPlugin) Client(b *plugin.MuxBroker, client *rpc.Client) (interface{}, error) {

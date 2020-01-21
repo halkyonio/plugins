@@ -3,11 +3,14 @@ package capability
 import (
 	"encoding/gob"
 	"fmt"
+	"github.com/hashicorp/go-plugin"
 	halkyon "halkyon.io/api/capability/v1beta1"
 	framework "halkyon.io/operator-framework"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"os"
+	"path/filepath"
 )
 
 type PluginServer interface {
@@ -34,8 +37,16 @@ func (p PluginServerImpl) GetConfig(req PluginRequest, res *framework.DependentR
 
 var _ PluginServer = &PluginServerImpl{}
 
-func NewPluginServer(capability PluginResource) PluginServer {
-	return PluginServerImpl{capability}
+func StartPluginServerFor(resources ...PluginResource) {
+	pluginName := filepath.Base(os.Args[0])
+	p, err := NewAggregatePluginResource(resources...)
+	if err != nil {
+		panic(err)
+	}
+	plugin.Serve(&plugin.ServeConfig{
+		HandshakeConfig: Handshake,
+		Plugins:         map[string]plugin.Plugin{pluginName: &GoPluginPlugin{Delegate: p}},
+	})
 }
 
 func (p PluginServerImpl) Build(req PluginRequest, res *BuildResponse) error {
