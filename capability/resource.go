@@ -7,9 +7,17 @@ import (
 	framework "halkyon.io/operator-framework"
 )
 
+// PluginResource gathers behavior that plugin implementors are expected to provide to the plugins architecture
 type PluginResource interface {
+	// GetSupportedCategory returns the CapabilityCategory that this plugin supports
 	GetSupportedCategory() halkyon.CapabilityCategory
+	// GetSupportedTypes returns the list of supported CapabilityTypes along with associated versions when they exist.
+	// Note that, while a plugin can only support one CapabilityCategory (e.g. "database"), a plugin can provide support for
+	// multiple CapabilityTypes (e.g. "postgresql", "mysql", etc.) within the confine of the specified category.
 	GetSupportedTypes() []TypeInfo
+	// GetDependentResourcesWith returns an ordered list of DependentResources initialized with the specified owner.
+	// DependentResources represent secondary resources that the capability might need to work (e.g. Kubernetes Role or Secret)
+	// along with the resource (if it exists) implementing the capability itself (e.g. KubeDB's Postgres).
 	GetDependentResourcesWith(owner v1beta1.HalkyonResource) []framework.DependentResource
 }
 

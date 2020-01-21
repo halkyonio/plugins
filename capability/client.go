@@ -15,11 +15,20 @@ import (
 	"path/filepath"
 )
 
+// Plugin is the operator-facing interface that can be interacted with in Halkyon
 type Plugin interface {
+	// Name returns the name of this Plugin
 	Name() string
+	// GetCategory retrieves the CapabilityCategory supported by this Plugin
 	GetCategory() halkyon.CapabilityCategory
+	// GetTypes returns TypeInfo providing information about CapabilityTypes this Plugin supports
 	GetTypes() []TypeInfo
+	// ReadyFor initializes the DependentResources needed by the given Capability and readies the Plugin for requests by the host.
+	// Note that the order in which the DependentResources are returned is significant and the operator will process them in the
+	// specified order. This is needed because some capabilities might require some dependent resources to be present before
+	// processing others.
 	ReadyFor(owner *halkyon.Capability) []framework.DependentResource
+	// Kill kills the RPC client and server associated with this Plugin when the host process terminates
 	Kill()
 }
 
@@ -94,6 +103,10 @@ func (p *PluginClient) ReadyFor(owner *halkyon.Capability) []framework.Dependent
 	return depRes
 }
 
+// NewPlugin creates the infrastructure required for the host (the operator) to be able to call the plugin binary which path is
+// given, setting up a logger that can be used to output information in the operator logs. The new Plugin is queried and its
+// supported category/type pairs are registered so that when a Capability requiring one of these pairs is created, the operator
+// can delegate to the appropriate plugin. The RPC server and client are also started using the Handshake configuration.
 func NewPlugin(path string, log logr.Logger) (Plugin, error) {
 	name := filepath.Base(path)
 
